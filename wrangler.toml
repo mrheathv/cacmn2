@@ -6,7 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "construction-os-db"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "f2626a84-b82f-4466-ba96-847090d051c7"
 
 [[r2_buckets]]
 binding = "R2"
