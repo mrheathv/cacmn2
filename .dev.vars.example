@@ -1,0 +1,2 @@
+# Copy this file to .dev.vars for local development (never commit .dev.vars)
+JWT_SECRET=dev-secret-change-in-production-must-be-at-least-32-chars
