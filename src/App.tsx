@@ -9,10 +9,15 @@ import { DashboardPage } from '@/pages/DashboardPage'
 import { ClientsPage } from '@/pages/crm/ClientsPage'
 import { ClientDetailPage } from '@/pages/crm/ClientDetailPage'
 import { LeadsPage } from '@/pages/crm/LeadsPage'
+import { ProjectsPage } from '@/pages/projects/ProjectsPage'
+import { ProjectDetailPage } from '@/pages/projects/ProjectDetailPage'
+import { EstimatesPage } from '@/pages/estimates/EstimatesPage'
+import { EstimateDetailPage } from '@/pages/estimates/EstimateDetailPage'
+import { WorkOrdersPage } from '@/pages/work-orders/WorkOrdersPage'
+import { WorkOrderDetailPage } from '@/pages/work-orders/WorkOrderDetailPage'
+import { SubcontractorsPage } from '@/pages/subcontractors/SubcontractorsPage'
+import { SubDetailPage } from '@/pages/subcontractors/SubDetailPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
-
-// Lazy stubs for phases 3-8 (implemented in future sessions)
-import { PlaceholderPage } from '@/pages/PlaceholderPage'
 
 export default function App() {
   return (
@@ -28,21 +33,21 @@ export default function App() {
             <Route path="clients/:id" element={<ClientDetailPage />} />
             <Route path="leads" element={<LeadsPage />} />
 
-            {/* Projects — Phase 3 */}
-            <Route path="projects" element={<PlaceholderPage title="Projects" phase={3} />} />
-            <Route path="projects/:id" element={<PlaceholderPage title="Project Detail" phase={3} />} />
+            {/* Projects */}
+            <Route path="projects" element={<ProjectsPage />} />
+            <Route path="projects/:id" element={<ProjectDetailPage />} />
 
-            {/* Estimates — Phase 4 */}
-            <Route path="estimates" element={<PlaceholderPage title="Estimates" phase={4} />} />
-            <Route path="estimates/:id" element={<PlaceholderPage title="Estimate Detail" phase={4} />} />
+            {/* Estimates */}
+            <Route path="estimates" element={<EstimatesPage />} />
+            <Route path="estimates/:id" element={<EstimateDetailPage />} />
 
-            {/* Work Orders — Phase 5 */}
-            <Route path="work-orders" element={<PlaceholderPage title="Work Orders" phase={5} />} />
-            <Route path="work-orders/:id" element={<PlaceholderPage title="Work Order Detail" phase={5} />} />
+            {/* Work Orders */}
+            <Route path="work-orders" element={<WorkOrdersPage />} />
+            <Route path="work-orders/:id" element={<WorkOrderDetailPage />} />
 
-            {/* Subcontractors — Phase 6 */}
-            <Route path="subcontractors" element={<PlaceholderPage title="Subcontractors" phase={6} />} />
-            <Route path="subcontractors/:id" element={<PlaceholderPage title="Subcontractor Detail" phase={6} />} />
+            {/* Subcontractors */}
+            <Route path="subcontractors" element={<SubcontractorsPage />} />
+            <Route path="subcontractors/:id" element={<SubDetailPage />} />
 
             {/* Settings */}
             <Route path="settings" element={<SettingsPage />} />

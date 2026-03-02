@@ -15,7 +15,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "types": ["@cloudflare/workers-types"]
+    "types": ["node"]
   },
-  "include": ["vite.config.ts", "functions/**/*.ts"]
+  "include": ["vite.config.ts"]
 }

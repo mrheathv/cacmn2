@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -116,7 +116,16 @@ export function ClientDetailPage() {
   }
 
   const openEditContact = (c: Contact) => {
-    contactForm.reset({ ...c, is_primary: !!c.is_primary, email: c.email ?? '' })
+    contactForm.reset({
+      first_name: c.first_name,
+      last_name: c.last_name,
+      title: c.title ?? '',
+      email: c.email ?? '',
+      phone: c.phone ?? '',
+      mobile: c.mobile ?? '',
+      notes: c.notes ?? '',
+      is_primary: !!c.is_primary,
+    })
     setContactDialog({ open: true, editing: c })
   }
 
