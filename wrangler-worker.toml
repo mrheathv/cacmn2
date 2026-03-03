@@ -1,0 +1,19 @@
+name = "construction-os-expiry-notifier"
+main = "workers/expiry-notifier.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["0 14 * * *"]   # Daily at 9am CT (UTC-5 = 14:00 UTC)
+
+[[d1_databases]]
+binding = "DB"
+database_name = "construction-os-db"
+database_id = "f2626a84-b82f-4466-ba96-847090d051c7"
+
+[vars]
+FROM_EMAIL = "Construct-All <noreply@cacmn.com>"
+
+# Secrets — set via:
+#   wrangler secret put RESEND_API_KEY --config wrangler-worker.toml
+#   wrangler secret put INTERNAL_NOTIFY_EMAIL --config wrangler-worker.toml
