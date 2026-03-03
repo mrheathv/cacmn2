@@ -28,10 +28,10 @@ const subSchema = z.object({
   insurance_carrier: z.string().optional(),
   insurance_policy: z.string().optional(),
   insurance_expiry: z.string().optional(),
-  insurance_amount: z.number().optional(),
+  insurance_amount: z.number().nullish(),
   w9_on_file: z.boolean().optional(),
   prequalified: z.boolean().optional(),
-  rating: z.number().min(1).max(5).optional(),
+  rating: z.number().min(1).max(5).nullish(),
   status: z.enum(['active', 'inactive', 'do_not_use']).optional(),
   notes: z.string().optional(),
 })

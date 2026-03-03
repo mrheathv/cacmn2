@@ -36,10 +36,14 @@ export function SubcontractorsPage() {
   useEffect(() => { load() }, [load])
 
   const handleCreate = async (data: SubFormData) => {
-    await api.post('/subcontractors', data)
-    toast({ title: 'Subcontractor added' })
-    setCreateOpen(false)
-    load()
+    try {
+      await api.post('/subcontractors', data)
+      toast({ title: 'Subcontractor added' })
+      setCreateOpen(false)
+      load()
+    } catch (e) {
+      toast({ title: 'Error adding subcontractor', description: String(e), variant: 'destructive' })
+    }
   }
 
   const today = new Date().toISOString().slice(0, 10)
