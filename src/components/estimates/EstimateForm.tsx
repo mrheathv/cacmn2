@@ -60,10 +60,10 @@ export function EstimateForm({ open, onOpenChange, onSave, clients, projects, in
 
           <div className="space-y-1.5">
             <Label>Link to Project (optional)</Label>
-            <Select defaultValue={initialValues?.project_id?.toString() ?? ''} onValueChange={v => setValue('project_id', v ? Number(v) : undefined)}>
+            <Select defaultValue={initialValues?.project_id?.toString() ?? 'none'} onValueChange={v => setValue('project_id', v === 'none' ? undefined : Number(v))}>
               <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value="none">None</SelectItem>
                 {projects.map(p => <SelectItem key={p.id} value={String(p.id)}>{p.project_number} — {p.name}</SelectItem>)}
               </SelectContent>
             </Select>

@@ -90,12 +90,12 @@ export function ClientsPage() {
       {/* Filters */}
       <div className="flex gap-3 mb-6">
         <SearchInput value={search} onChange={setSearch} placeholder="Search clients..." className="max-w-sm" />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter || 'all'} onValueChange={v => setStatusFilter(v === 'all' ? '' : v)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All statuses</SelectItem>
+            <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="inactive">Inactive</SelectItem>
             <SelectItem value="prospect">Prospect</SelectItem>

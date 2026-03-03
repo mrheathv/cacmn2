@@ -90,12 +90,12 @@ export function ProjectsPage() {
       {/* Filters row */}
       <div className="flex gap-3 mb-5">
         <SearchInput value={search} onChange={setSearch} placeholder="Search projects..." className="max-w-sm" />
-        <Select value={pmFilter} onValueChange={setPmFilter}>
+        <Select value={pmFilter || 'all'} onValueChange={v => setPmFilter(v === 'all' ? '' : v)}>
           <SelectTrigger className="w-44">
             <SelectValue placeholder="All PMs" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All PMs</SelectItem>
+            <SelectItem value="all">All PMs</SelectItem>
             {pms.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.full_name}</SelectItem>)}
           </SelectContent>
         </Select>

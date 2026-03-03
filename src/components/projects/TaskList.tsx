@@ -206,20 +206,20 @@ export function TaskList({ projectId, tasks, milestones, users, onChange }: Task
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Milestone</Label>
-                <Select defaultValue={dialog.editing?.milestone_id?.toString() ?? ''} onValueChange={v => setValue('milestone_id', v ? Number(v) : undefined)}>
+                <Select defaultValue={dialog.editing?.milestone_id?.toString() ?? 'none'} onValueChange={v => setValue('milestone_id', v === 'none' ? undefined : Number(v))}>
                   <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {milestones.map(m => <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
                 <Label>Assigned To</Label>
-                <Select defaultValue={dialog.editing?.assigned_to?.toString() ?? ''} onValueChange={v => setValue('assigned_to', v ? Number(v) : undefined)}>
+                <Select defaultValue={dialog.editing?.assigned_to?.toString() ?? 'none'} onValueChange={v => setValue('assigned_to', v === 'none' ? undefined : Number(v))}>
                   <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Unassigned</SelectItem>
+                    <SelectItem value="none">Unassigned</SelectItem>
                     {users.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.full_name}</SelectItem>)}
                   </SelectContent>
                 </Select>
