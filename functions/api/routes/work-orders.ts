@@ -7,19 +7,19 @@ import type { Env } from '../[[route]]'
 export const workOrderRoutes = new Hono<{ Bindings: Env }>()
 
 const woSchema = z.object({
-  project_id: z.number().optional(),
-  client_id: z.number().optional(),
-  contact_id: z.number().optional(),
+  project_id: z.number().nullish(),
+  client_id: z.number().nullish(),
+  contact_id: z.number().nullish(),
   title: z.string().min(1),
-  description: z.string().optional(),
-  scope_of_work: z.string().optional(),
+  description: z.string().nullish(),
+  scope_of_work: z.string().nullish(),
   priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
-  wo_type: z.enum(['change_order', 'service', 'warranty', 'standard', 'repair']).optional(),
-  scheduled_date: z.string().optional(),
-  due_date: z.string().optional(),
-  estimated_cost: z.number().optional(),
-  assigned_to: z.number().optional(),
-  notes: z.string().optional(),
+  wo_type: z.enum(['repair', 'maintenance', 'inspection', 'new_work', 'warranty', 'other']).nullish(),
+  scheduled_date: z.string().nullish(),
+  due_date: z.string().nullish(),
+  estimated_cost: z.number().nullish(),
+  assigned_to: z.number().nullish(),
+  notes: z.string().nullish(),
 })
 
 workOrderRoutes.get('/', async (c) => {
@@ -49,7 +49,7 @@ workOrderRoutes.post('/', zValidator('json', woSchema), async (c) => {
      VALUES (?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?)`,
     woNumber, data.project_id ?? null, data.client_id ?? null, data.contact_id ?? null,
     data.title, data.description ?? null, data.scope_of_work ?? null,
-    data.priority ?? 'normal', data.wo_type ?? 'standard',
+    data.priority ?? 'normal', data.wo_type ?? null,
     data.scheduled_date ?? null, data.due_date ?? null,
     data.estimated_cost ?? null, data.assigned_to ?? null,
     data.notes ?? null, user.sub

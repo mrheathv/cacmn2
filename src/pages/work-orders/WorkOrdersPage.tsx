@@ -47,10 +47,14 @@ export function WorkOrdersPage() {
   useEffect(() => { load() }, [load])
 
   const handleCreate = async (data: WorkOrderFormData) => {
-    await api.post('/work-orders', data)
-    toast({ title: 'Work order created' })
-    setCreateOpen(false)
-    load()
+    try {
+      await api.post('/work-orders', data)
+      toast({ title: 'Work order created' })
+      setCreateOpen(false)
+      load()
+    } catch (e) {
+      toast({ title: 'Error creating work order', description: String(e), variant: 'destructive' })
+    }
   }
 
   const filtered = workOrders.filter(wo => {
