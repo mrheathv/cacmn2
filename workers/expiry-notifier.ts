@@ -15,8 +15,15 @@ interface Sub {
   insurance_expiry: string | null
 }
 
+interface SendResult {
+  company: string
+  to: string
+  items: string[]
+  sent: boolean
+  error?: string
+}
+
 function formatDate(iso: string): string {
-  // iso is 'YYYY-MM-DD'
   const [y, m, d] = iso.split('-')
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   return `${months[parseInt(m) - 1]} ${parseInt(d)}, ${y}`
@@ -65,25 +72,14 @@ function buildHtml(sub: Sub, expiringItems: { label: string; date: string }[]): 
 </html>`
 }
 
-async function sendEmail(
-  env: Env,
-  to: string,
-  subject: string,
-  html: string,
-): Promise<void> {
+async function sendEmail(env: Env, to: string, cc: string, subject: string, html: string): Promise<void> {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      from: env.FROM_EMAIL,
-      to: [to],
-      cc: [env.INTERNAL_NOTIFY_EMAIL],
-      subject,
-      html,
-    }),
+    body: JSON.stringify({ from: env.FROM_EMAIL, to: [to], cc: [cc], subject, html }),
   })
   if (!res.ok) {
     const body = await res.text()
@@ -91,58 +87,116 @@ async function sendEmail(
   }
 }
 
-export default {
-  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
-    const { results } = await env.DB.prepare(`
-      SELECT company_name, contact_name, contact_email,
-             license_number, license_expiry,
-             insurance_carrier, insurance_expiry
-      FROM subcontractors
-      WHERE status = 'active'
-        AND contact_email IS NOT NULL
-        AND contact_email != ''
-        AND (
-          date(license_expiry)    = date('now', '+30 days')
-          OR date(insurance_expiry) = date('now', '+30 days')
-        )
-    `).all<Sub>()
-
-    const today30 = new Date()
-    today30.setUTCDate(today30.getUTCDate() + 30)
-    const target = today30.toISOString().slice(0, 10)
-
-    const sends: Promise<void>[] = []
-
-    for (const sub of results) {
-      const expiringItems: { label: string; date: string }[] = []
-
-      if (sub.license_expiry?.slice(0, 10) === target) {
-        const label = sub.license_number
-          ? `Contractor License #${sub.license_number}`
-          : 'Contractor License'
-        expiringItems.push({ label, date: sub.license_expiry!.slice(0, 10) })
-      }
-
-      if (sub.insurance_expiry?.slice(0, 10) === target) {
-        const label = sub.insurance_carrier
-          ? `Certificate of Insurance (${sub.insurance_carrier})`
-          : 'Certificate of Insurance'
-        expiringItems.push({ label, date: sub.insurance_expiry!.slice(0, 10) })
-      }
-
-      if (expiringItems.length === 0) continue
-
-      const subject = `Action Required: Certification Expiring in 30 Days — ${sub.company_name}`
-      const html = buildHtml(sub, expiringItems)
-
-      sends.push(
-        sendEmail(env, sub.contact_email, subject, html).catch(err =>
-          console.error(`Failed to send to ${sub.contact_email} (${sub.company_name}):`, err),
-        ),
+// Core logic shared by the cron handler and the test endpoint.
+// toOverride: when set, redirects all emails to this address instead of the real contact_email.
+async function runNotifier(env: Env, toOverride?: string): Promise<SendResult[]> {
+  const { results } = await env.DB.prepare(`
+    SELECT company_name, contact_name, contact_email,
+           license_number, license_expiry,
+           insurance_carrier, insurance_expiry
+    FROM subcontractors
+    WHERE status = 'active'
+      AND contact_email IS NOT NULL
+      AND contact_email != ''
+      AND (
+        date(license_expiry)    = date('now', '+30 days')
+        OR date(insurance_expiry) = date('now', '+30 days')
       )
+  `).all<Sub>()
+
+  const target = new Date()
+  target.setUTCDate(target.getUTCDate() + 30)
+  const targetDate = target.toISOString().slice(0, 10)
+
+  const summary: SendResult[] = []
+
+  for (const sub of results) {
+    const expiringItems: { label: string; date: string }[] = []
+
+    if (sub.license_expiry?.slice(0, 10) === targetDate) {
+      expiringItems.push({
+        label: sub.license_number ? `Contractor License #${sub.license_number}` : 'Contractor License',
+        date: sub.license_expiry!.slice(0, 10),
+      })
     }
 
-    ctx.waitUntil(Promise.all(sends))
-    console.log(`Expiry notifier: checked ${results.length} subs, queued ${sends.length} emails.`)
+    if (sub.insurance_expiry?.slice(0, 10) === targetDate) {
+      expiringItems.push({
+        label: sub.insurance_carrier
+          ? `Certificate of Insurance (${sub.insurance_carrier})`
+          : 'Certificate of Insurance',
+        date: sub.insurance_expiry!.slice(0, 10),
+      })
+    }
+
+    if (expiringItems.length === 0) continue
+
+    const recipient = toOverride ?? sub.contact_email
+    const cc = toOverride ?? env.INTERNAL_NOTIFY_EMAIL
+    const subject = `Action Required: Certification Expiring in 30 Days — ${sub.company_name}`
+    const html = buildHtml(sub, expiringItems)
+
+    const result: SendResult = {
+      company: sub.company_name,
+      to: recipient,
+      items: expiringItems.map(i => `${i.label} (${i.date})`),
+      sent: false,
+    }
+
+    try {
+      await sendEmail(env, recipient, cc, subject, html)
+      result.sent = true
+    } catch (err) {
+      result.error = String(err)
+      console.error(`Failed to send to ${recipient} (${sub.company_name}):`, err)
+    }
+
+    summary.push(result)
+  }
+
+  return summary
+}
+
+export default {
+  // Cron trigger — runs daily at 9am CT
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(
+      runNotifier(env).then(results => {
+        const sent = results.filter(r => r.sent).length
+        console.log(`Expiry notifier: ${results.length} matches, ${sent} emails sent.`)
+      }),
+    )
+  },
+
+  // HTTP handler — manual test trigger
+  // Usage:
+  //   curl -H "Authorization: Bearer <RESEND_API_KEY>" \
+  //        https://<worker-url>/send-test
+  //
+  //   # Redirect all emails to yourself instead of real contacts:
+  //   curl -H "Authorization: Bearer <RESEND_API_KEY>" \
+  //        "https://<worker-url>/send-test?to=you@example.com"
+  async fetch(req: Request, env: Env): Promise<Response> {
+    const url = new URL(req.url)
+
+    if (url.pathname !== '/send-test') {
+      return new Response('Not found', { status: 404 })
+    }
+
+    // Require the API key as a bearer token
+    const auth = req.headers.get('Authorization') ?? ''
+    if (auth !== `Bearer ${env.RESEND_API_KEY}`) {
+      return new Response('Unauthorized', { status: 401 })
+    }
+
+    const toOverride = url.searchParams.get('to') ?? undefined
+    const results = await runNotifier(env, toOverride)
+
+    return Response.json({
+      matched: results.length,
+      sent: results.filter(r => r.sent).length,
+      redirected_to: toOverride ?? null,
+      results,
+    })
   },
 }
