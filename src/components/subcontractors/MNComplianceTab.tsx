@@ -146,7 +146,7 @@ export function MNComplianceTab({ sub }: MNComplianceTabProps) {
       api.get<Document[]>(`/documents?entity_type=subcontractor&entity_id=${sub.id}`),
     ])
     // Normalize: ensure all criterion_N_verified fields exist (0 if absent)
-    const normalized: MNCompliance = {
+    const defaults: MNCompliance = {
       subcontractor_id: sub.id,
       criterion_1_verified: 0,
       criterion_2_verified: 0,
@@ -162,8 +162,8 @@ export function MNComplianceTab({ sub }: MNComplianceTabProps) {
       criterion_12_verified: 0,
       criterion_13_verified: 0,
       criterion_14_verified: 0,
-      ...compData,
     }
+    const normalized: MNCompliance = { ...defaults, ...compData }
     setCompliance(normalized)
     setDocs(docData.filter((d) => d.compliance_criterion != null))
   }, [sub.id])
