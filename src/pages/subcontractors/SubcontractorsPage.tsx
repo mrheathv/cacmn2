@@ -10,7 +10,7 @@ import { TradeTag } from '@/components/subcontractors/TradeTag'
 import { SearchInput } from '@/components/shared/SearchInput'
 import { formatDate } from '@/lib/utils'
 import { toast } from '@/hooks/useToast'
-import { Plus, HardHat, AlertTriangle, Star } from 'lucide-react'
+import { Plus, HardHat, AlertTriangle, Star, ShieldCheck, ShieldAlert, ShieldX } from 'lucide-react'
 
 const STATUS_COLORS: Record<string, string> = {
   active: 'bg-green-100 text-green-700',
@@ -112,6 +112,7 @@ export function SubcontractorsPage() {
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Insurance</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Rating</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">MN Compliance</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Flags</th>
               </tr>
             </thead>
@@ -150,6 +151,9 @@ export function SubcontractorsPage() {
                       ) : <span className="text-muted-foreground text-xs">—</span>}
                     </td>
                     <td className="px-4 py-3">
+                      <ComplianceBadge verifiedCount={s.verified_count ?? null} />
+                    </td>
+                    <td className="px-4 py-3">
                       <div className="flex gap-1">
                         {s.prequalified && <span className="text-xs text-green-600 font-medium">Prequal</span>}
                         {s.w9_on_file && <span className="text-xs text-blue-600">W-9</span>}
@@ -171,5 +175,38 @@ export function SubcontractorsPage() {
         title="Add Subcontractor"
       />
     </div>
+  )
+}
+
+function ComplianceBadge({ verifiedCount }: { verifiedCount: number | null }) {
+  if (verifiedCount === null || verifiedCount === undefined) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+        <ShieldX className="h-3.5 w-3.5" />
+        Not started
+      </span>
+    )
+  }
+  if (verifiedCount === 14) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-green-700 font-medium">
+        <ShieldCheck className="h-3.5 w-3.5" />
+        Compliant
+      </span>
+    )
+  }
+  if (verifiedCount >= 10) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-yellow-700 font-medium">
+        <ShieldAlert className="h-3.5 w-3.5" />
+        {verifiedCount}/14
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-xs text-red-600 font-medium">
+      <ShieldX className="h-3.5 w-3.5" />
+      {verifiedCount}/14
+    </span>
   )
 }

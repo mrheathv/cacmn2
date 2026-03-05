@@ -38,12 +38,19 @@ const subSchema = z.object({
 
 subcontractorRoutes.get('/', async (c) => {
   const { trade, status, search } = c.req.query()
-  let sql = 'SELECT * FROM subcontractors WHERE 1=1'
+  let sql = `SELECT s.*,
+    (SELECT (COALESCE(c.criterion_1_verified,0)+COALESCE(c.criterion_2_verified,0)+COALESCE(c.criterion_3_verified,0)+
+             COALESCE(c.criterion_4_verified,0)+COALESCE(c.criterion_5_verified,0)+COALESCE(c.criterion_6_verified,0)+
+             COALESCE(c.criterion_7_verified,0)+COALESCE(c.criterion_8_verified,0)+COALESCE(c.criterion_9_verified,0)+
+             COALESCE(c.criterion_10_verified,0)+COALESCE(c.criterion_11_verified,0)+COALESCE(c.criterion_12_verified,0)+
+             COALESCE(c.criterion_13_verified,0)+COALESCE(c.criterion_14_verified,0))
+     FROM subcontractor_mn_compliance c WHERE c.subcontractor_id = s.id) as verified_count
+  FROM subcontractors s WHERE 1=1`
   const params: unknown[] = []
-  if (trade) { sql += ' AND trade = ?'; params.push(trade) }
-  if (status) { sql += ' AND status = ?'; params.push(status) }
-  if (search) { sql += ' AND (company_name LIKE ? OR contact_name LIKE ?)'; params.push(`%${search}%`, `%${search}%`) }
-  sql += ' ORDER BY company_name'
+  if (trade) { sql += ' AND s.trade = ?'; params.push(trade) }
+  if (status) { sql += ' AND s.status = ?'; params.push(status) }
+  if (search) { sql += ' AND (s.company_name LIKE ? OR s.contact_name LIKE ?)'; params.push(`%${search}%`, `%${search}%`) }
+  sql += ' ORDER BY s.company_name'
   return c.json(await queryAll(c.env.DB, sql, ...params))
 })
 
@@ -69,7 +76,16 @@ subcontractorRoutes.post('/', zValidator('json', subSchema), async (c) => {
 })
 
 subcontractorRoutes.get('/:id', async (c) => {
-  const sub = await queryOne(c.env.DB, 'SELECT * FROM subcontractors WHERE id = ?', c.req.param('id'))
+  const sub = await queryOne<Record<string, unknown>>(c.env.DB,
+    `SELECT s.*,
+      (SELECT (COALESCE(c.criterion_1_verified,0)+COALESCE(c.criterion_2_verified,0)+COALESCE(c.criterion_3_verified,0)+
+               COALESCE(c.criterion_4_verified,0)+COALESCE(c.criterion_5_verified,0)+COALESCE(c.criterion_6_verified,0)+
+               COALESCE(c.criterion_7_verified,0)+COALESCE(c.criterion_8_verified,0)+COALESCE(c.criterion_9_verified,0)+
+               COALESCE(c.criterion_10_verified,0)+COALESCE(c.criterion_11_verified,0)+COALESCE(c.criterion_12_verified,0)+
+               COALESCE(c.criterion_13_verified,0)+COALESCE(c.criterion_14_verified,0))
+       FROM subcontractor_mn_compliance c WHERE c.subcontractor_id = s.id) as verified_count
+     FROM subcontractors s WHERE s.id = ?`,
+    c.req.param('id'))
   if (!sub) return c.json({ error: 'Not found' }, 404)
   const bids = await queryAll(c.env.DB,
     `SELECT sb.*, p.project_number, p.name as project_name
@@ -177,4 +193,105 @@ subcontractorRoutes.delete('/:id/bids/:bid', async (c) => {
     c.req.param('bid'), c.req.param('id')
   )
   return c.json({ ok: true })
+})
+
+// MN IC Compliance
+const complianceSchema = z.object({
+  entity_type: z.enum(['llc','corporation','sole_prop','partnership','other']).nullable().optional(),
+  criterion_1_verified: z.boolean().optional(),
+  criterion_1_notes: z.string().nullable().optional(),
+  criterion_2_verified: z.boolean().optional(),
+  criterion_2_notes: z.string().nullable().optional(),
+  criterion_3_verified: z.boolean().optional(),
+  criterion_3_notes: z.string().nullable().optional(),
+  federal_ein: z.string().nullable().optional(),
+  criterion_4_verified: z.boolean().optional(),
+  criterion_4_notes: z.string().nullable().optional(),
+  mn_tax_id: z.string().nullable().optional(),
+  criterion_5_verified: z.boolean().optional(),
+  criterion_5_notes: z.string().nullable().optional(),
+  criterion_6_verified: z.boolean().optional(),
+  criterion_6_notes: z.string().nullable().optional(),
+  criterion_7_verified: z.boolean().optional(),
+  criterion_7_notes: z.string().nullable().optional(),
+  criterion_8_verified: z.boolean().optional(),
+  criterion_8_notes: z.string().nullable().optional(),
+  criterion_9_verified: z.boolean().optional(),
+  criterion_9_notes: z.string().nullable().optional(),
+  criterion_10_verified: z.boolean().optional(),
+  criterion_10_notes: z.string().nullable().optional(),
+  criterion_11_verified: z.boolean().optional(),
+  criterion_11_notes: z.string().nullable().optional(),
+  criterion_12_verified: z.boolean().optional(),
+  criterion_12_notes: z.string().nullable().optional(),
+  workers_comp_carrier: z.string().nullable().optional(),
+  workers_comp_policy: z.string().nullable().optional(),
+  workers_comp_expiry: z.string().nullable().optional(),
+  criterion_13_verified: z.boolean().optional(),
+  criterion_13_notes: z.string().nullable().optional(),
+  criterion_14_verified: z.boolean().optional(),
+  criterion_14_notes: z.string().nullable().optional(),
+})
+
+function computeVerifiedCount(row: Record<string, unknown>): number {
+  let count = 0
+  for (let i = 1; i <= 14; i++) {
+    if (row[`criterion_${i}_verified`]) count++
+  }
+  return count
+}
+
+subcontractorRoutes.get('/:id/compliance', async (c) => {
+  const subId = c.req.param('id')
+  const row = await queryOne<Record<string, unknown>>(
+    c.env.DB, 'SELECT * FROM subcontractor_mn_compliance WHERE subcontractor_id = ?', subId
+  )
+  if (!row) {
+    // Return empty compliance record
+    return c.json({ subcontractor_id: parseInt(subId), verified_count: 0 })
+  }
+  return c.json({ ...row, verified_count: computeVerifiedCount(row) })
+})
+
+subcontractorRoutes.put('/:id/compliance', zValidator('json', complianceSchema), async (c) => {
+  const subId = c.req.param('id')
+  const data = c.req.valid('json')
+  const user = c.get('user')
+
+  // Convert boolean fields to 0/1 for SQLite
+  const mapped: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(data)) {
+    if (k.endsWith('_verified')) {
+      mapped[k] = v ? 1 : 0
+    } else {
+      mapped[k] = v ?? null
+    }
+  }
+
+  const existing = await queryOne(
+    c.env.DB, 'SELECT id FROM subcontractor_mn_compliance WHERE subcontractor_id = ?', subId
+  )
+
+  if (!existing) {
+    // Insert
+    const cols = ['subcontractor_id', 'last_reviewed_at', 'last_reviewed_by', ...Object.keys(mapped)]
+    const placeholders = cols.map(() => '?').join(', ')
+    await execute(c.env.DB,
+      `INSERT INTO subcontractor_mn_compliance (${cols.join(', ')}) VALUES (${placeholders})`,
+      subId, new Date().toISOString(), user.sub, ...Object.values(mapped)
+    )
+  } else {
+    // Update
+    const fields = [...Object.keys(mapped).map(k => `${k} = ?`), 'last_reviewed_at = ?', 'last_reviewed_by = ?', 'updated_at = datetime(\'now\')']
+    await execute(c.env.DB,
+      `UPDATE subcontractor_mn_compliance SET ${fields.join(', ')} WHERE subcontractor_id = ?`,
+      ...Object.values(mapped), new Date().toISOString(), user.sub, subId
+    )
+  }
+
+  // Return updated record
+  const updated = await queryOne<Record<string, unknown>>(
+    c.env.DB, 'SELECT * FROM subcontractor_mn_compliance WHERE subcontractor_id = ?', subId
+  )
+  return c.json({ ...updated, verified_count: updated ? computeVerifiedCount(updated) : 0 })
 })
