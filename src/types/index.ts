@@ -212,6 +212,7 @@ export interface Document {
   mime_type?: string | null
   category: string
   description?: string | null
+  compliance_criterion?: number | null
   version: number
   uploaded_by?: number | null
   uploaded_by_name?: string | null
@@ -243,11 +244,54 @@ export interface Subcontractor {
   rating?: number | null
   status: 'active' | 'inactive' | 'do_not_use'
   notes?: string | null
+  verified_count?: number | null
   bids?: SubcontractorBid[]
   projects?: SubcontractorProject[]
   documents?: Document[]
   created_at: string
   updated_at: string
+}
+
+export interface MNCompliance {
+  id?: number
+  subcontractor_id: number
+  entity_type?: 'llc' | 'corporation' | 'sole_prop' | 'partnership' | 'other' | null
+  criterion_1_verified: number
+  criterion_1_notes?: string | null
+  criterion_2_verified: number
+  criterion_2_notes?: string | null
+  criterion_3_verified: number
+  criterion_3_notes?: string | null
+  federal_ein?: string | null
+  criterion_4_verified: number
+  criterion_4_notes?: string | null
+  mn_tax_id?: string | null
+  criterion_5_verified: number
+  criterion_5_notes?: string | null
+  criterion_6_verified: number
+  criterion_6_notes?: string | null
+  criterion_7_verified: number
+  criterion_7_notes?: string | null
+  criterion_8_verified: number
+  criterion_8_notes?: string | null
+  criterion_9_verified: number
+  criterion_9_notes?: string | null
+  criterion_10_verified: number
+  criterion_10_notes?: string | null
+  criterion_11_verified: number
+  criterion_11_notes?: string | null
+  criterion_12_verified: number
+  criterion_12_notes?: string | null
+  workers_comp_carrier?: string | null
+  workers_comp_policy?: string | null
+  workers_comp_expiry?: string | null
+  criterion_13_verified: number
+  criterion_13_notes?: string | null
+  criterion_14_verified: number
+  criterion_14_notes?: string | null
+  verified_count?: number
+  last_reviewed_at?: string | null
+  updated_at?: string
 }
 
 export interface SubcontractorBid {

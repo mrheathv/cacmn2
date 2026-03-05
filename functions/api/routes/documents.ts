@@ -32,6 +32,7 @@ documentRoutes.post(
     mime_type: z.string().min(1),
     category: z.enum(['plan', 'permit', 'contract', 'photo', 'spec', 'rfi', 'submittal', 'insurance', 'w9', 'other']).optional(),
     description: z.string().optional(),
+    compliance_criterion: z.number().int().min(1).max(14).optional(),
   })),
   async (c) => {
     const user = c.get('user')
@@ -43,10 +44,10 @@ documentRoutes.post(
 
     // Create a pending document record
     const result = await execute(c.env.DB,
-      `INSERT INTO documents (entity_type, entity_id, file_name, file_key, mime_type, category, description, uploaded_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO documents (entity_type, entity_id, file_name, file_key, mime_type, category, description, compliance_criterion, uploaded_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       data.entity_type, data.entity_id, data.file_name, fileKey,
-      data.mime_type, data.category ?? 'other', data.description ?? null, user.sub
+      data.mime_type, data.category ?? 'other', data.description ?? null, data.compliance_criterion ?? null, user.sub
     )
     const docId = lastInsertId(result)
 

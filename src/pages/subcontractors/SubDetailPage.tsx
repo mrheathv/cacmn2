@@ -12,7 +12,8 @@ import { SubBidForm, type SubBidFormData } from '@/components/subcontractors/Sub
 import { TradeTag } from '@/components/subcontractors/TradeTag'
 import { toast } from '@/hooks/useToast'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { Pencil, Plus, Star, AlertTriangle } from 'lucide-react'
+import { Pencil, Plus, Star, AlertTriangle, ShieldCheck, ShieldAlert, ShieldX } from 'lucide-react'
+import { MNComplianceTab } from '@/components/subcontractors/MNComplianceTab'
 
 const BID_STATUS_COLORS: Record<string, string> = {
   invited: 'bg-blue-100 text-blue-700',
@@ -129,6 +130,10 @@ export function SubDetailPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="bids">Bids ({bids.length})</TabsTrigger>
           <TabsTrigger value="documents">Documents ({documents.length})</TabsTrigger>
+          <TabsTrigger value="compliance" className="flex items-center gap-1.5">
+            <ComplianceIcon verifiedCount={sub.verified_count ?? null} />
+            MN Compliance ({sub.verified_count ?? 0}/14)
+          </TabsTrigger>
         </TabsList>
 
         {/* OVERVIEW */}
@@ -243,6 +248,11 @@ export function SubDetailPage() {
             />
           </div>
         </TabsContent>
+
+        {/* MN IC COMPLIANCE */}
+        <TabsContent value="compliance">
+          <MNComplianceTab sub={sub} />
+        </TabsContent>
       </Tabs>
 
       <SubForm
@@ -271,4 +281,11 @@ function Row({ label, value, highlight }: { label: string; value?: string | null
       <span className={`font-medium text-right ${highlight === 'red' ? 'text-red-600' : ''}`}>{value ?? '—'}</span>
     </div>
   )
+}
+
+function ComplianceIcon({ verifiedCount }: { verifiedCount: number | null }) {
+  if (verifiedCount === null || verifiedCount === undefined) return <ShieldX className="h-3.5 w-3.5 text-muted-foreground" />
+  if (verifiedCount === 14) return <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
+  if (verifiedCount >= 10) return <ShieldAlert className="h-3.5 w-3.5 text-yellow-500" />
+  return <ShieldX className="h-3.5 w-3.5 text-red-500" />
 }

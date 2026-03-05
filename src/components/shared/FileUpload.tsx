@@ -11,6 +11,7 @@ interface FileUploadProps {
   entityId: number
   onUploaded?: (doc: Document) => void
   className?: string
+  complianceCriterion?: number
 }
 
 function fileIcon(mime?: string | null) {
@@ -19,7 +20,7 @@ function fileIcon(mime?: string | null) {
   return <FileText className="h-4 w-4" />
 }
 
-export function FileUpload({ entityType, entityId, onUploaded, className }: FileUploadProps) {
+export function FileUpload({ entityType, entityId, onUploaded, className, complianceCriterion }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
@@ -37,6 +38,7 @@ export function FileUpload({ entityType, entityId, onUploaded, className }: File
           entity_id: entityId,
           file_name: file.name,
           mime_type: file.type || 'application/octet-stream',
+          ...(complianceCriterion !== undefined ? { compliance_criterion: complianceCriterion } : {}),
         })
 
         // Step 2: Upload file
@@ -64,6 +66,7 @@ export function FileUpload({ entityType, entityId, onUploaded, className }: File
           id: document_id, entity_type: entityType, entity_id: entityId,
           file_name: file.name, file_key, mime_type: file.type,
           file_size: file.size, category: 'other', version: 1,
+          compliance_criterion: complianceCriterion ?? null,
           created_at: new Date().toISOString(),
         })
       } catch {
