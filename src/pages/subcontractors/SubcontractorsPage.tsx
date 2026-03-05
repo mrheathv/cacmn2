@@ -10,12 +10,25 @@ import { TradeTag } from '@/components/subcontractors/TradeTag'
 import { SearchInput } from '@/components/shared/SearchInput'
 import { formatDate } from '@/lib/utils'
 import { toast } from '@/hooks/useToast'
-import { Plus, HardHat, AlertTriangle, Star, ShieldCheck, ShieldAlert, ShieldX } from 'lucide-react'
+import { Plus, HardHat, AlertTriangle, ShieldCheck, ShieldAlert, ShieldX } from 'lucide-react'
 
 const STATUS_COLORS: Record<string, string> = {
   active: 'bg-green-100 text-green-700',
   inactive: 'bg-gray-100 text-gray-600',
   do_not_use: 'bg-red-100 text-red-700',
+}
+
+const RISK_COLORS: Record<string, string> = {
+  low: 'bg-green-100 text-green-700',
+  medium: 'bg-yellow-100 text-yellow-700',
+  high: 'bg-red-100 text-red-700',
+}
+
+const BUSINESS_STRUCTURE_LABELS: Record<string, string> = {
+  sole_prop: 'Sole Prop',
+  llc: 'LLC',
+  corporation: 'Corp',
+  partnership: 'Partnership',
 }
 
 const TRADE_FILTERS = ['all', 'electrical', 'plumbing', 'hvac', 'concrete', 'carpentry', 'roofing', 'drywall', 'painting', 'other']
@@ -53,6 +66,7 @@ export function SubcontractorsPage() {
     const q = search.toLowerCase()
     const matchSearch = !q || s.company_name.toLowerCase().includes(q) ||
       (s.contact_name ?? '').toLowerCase().includes(q) ||
+      (s.business_email ?? '').toLowerCase().includes(q) ||
       s.trade.toLowerCase().includes(q)
     return matchTrade && matchSearch
   })
@@ -108,11 +122,11 @@ export function SubcontractorsPage() {
               <tr>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Company</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Trade</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Contact</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Structure</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Insurance</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Rating</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Risk</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">MN Compliance</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Insurance Exp.</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Flags</th>
               </tr>
             </thead>
@@ -124,16 +138,26 @@ export function SubcontractorsPage() {
                   <tr key={s.id} className="hover:bg-muted/20">
                     <td className="px-4 py-3">
                       <Link to={`/subcontractors/${s.id}`} className="font-medium hover:text-primary">{s.company_name}</Link>
+                      {s.dba_name && <div className="text-xs text-muted-foreground">{s.dba_name}</div>}
                     </td>
                     <td className="px-4 py-3"><TradeTag trade={s.trade} /></td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">
-                      {s.contact_name && <div>{s.contact_name}</div>}
-                      {s.contact_phone && <div>{s.contact_phone}</div>}
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {s.business_structure ? BUSINESS_STRUCTURE_LABELS[s.business_structure] ?? s.business_structure : '—'}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[s.status] ?? ''}`}>
                         {s.status.replace('_', ' ')}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {s.risk_level ? (
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${RISK_COLORS[s.risk_level] ?? ''}`}>
+                          {s.risk_level.charAt(0).toUpperCase() + s.risk_level.slice(1)}
+                        </span>
+                      ) : <span className="text-muted-foreground text-xs">—</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <ComplianceBadge verifiedCount={s.verified_count ?? null} />
                     </td>
                     <td className="px-4 py-3 text-xs">
                       {s.insurance_expiry ? (
@@ -143,21 +167,10 @@ export function SubcontractorsPage() {
                       ) : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="px-4 py-3">
-                      {s.rating ? (
-                        <span className="flex items-center gap-0.5 text-amber-500">
-                          <Star className="h-3.5 w-3.5 fill-current" />
-                          <span className="text-xs text-foreground">{s.rating}/5</span>
-                        </span>
-                      ) : <span className="text-muted-foreground text-xs">—</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <ComplianceBadge verifiedCount={s.verified_count ?? null} />
-                    </td>
-                    <td className="px-4 py-3">
                       <div className="flex gap-1">
-                        {s.prequalified && <span className="text-xs text-green-600 font-medium">Prequal</span>}
-                        {s.w9_on_file && <span className="text-xs text-blue-600">W-9</span>}
-                        {(insExpired || licExpired) && <AlertTriangle className="h-3.5 w-3.5 text-red-500" />}
+                        {s.prequalified ? <span className="text-xs text-green-600 font-medium">Prequal</span> : null}
+                        {s.w9_on_file ? <span className="text-xs text-blue-600">W-9</span> : null}
+                        {(insExpired || licExpired) ? <AlertTriangle className="h-3.5 w-3.5 text-red-500" /> : null}
                       </div>
                     </td>
                   </tr>
