@@ -16,23 +16,16 @@ const STATUSES = ['active', 'inactive', 'do_not_use']
 
 const schema = z.object({
   company_name: z.string().min(1),
+  dba_name: z.string().nullable().optional(),
+  business_structure: z.enum(['sole_prop','llc','corporation','partnership']).nullable().optional(),
   trade: z.string().min(1),
   status: z.string().default('active'),
-  contact_name: z.string().nullable().optional(),
-  contact_email: z.string().email().nullable().optional().or(z.literal('')),
-  contact_phone: z.string().nullable().optional(),
+  business_phone: z.string().nullable().optional(),
+  business_email: z.string().email().nullable().optional().or(z.literal('')),
   address: z.string().nullable().optional(),
   city: z.string().nullable().optional(),
   state: z.string().nullable().optional(),
   zip: z.string().nullable().optional(),
-  license_number: z.string().nullable().optional(),
-  license_expiry: z.string().nullable().optional(),
-  insurance_carrier: z.string().nullable().optional(),
-  insurance_expiry: z.string().nullable().optional(),
-  insurance_amount: z.number().nullable().optional(),
-  w9_on_file: z.boolean().default(false),
-  prequalified: z.boolean().default(false),
-  rating: z.number().min(1).max(5).nullable().optional(),
   notes: z.string().nullable().optional(),
 })
 
@@ -46,33 +39,33 @@ interface SubFormProps {
   title?: string
 }
 
+const BUSINESS_STRUCTURES = [
+  { value: 'llc', label: 'LLC' },
+  { value: 'corporation', label: 'Corporation' },
+  { value: 'sole_prop', label: 'Sole Proprietorship' },
+  { value: 'partnership', label: 'Partnership' },
+]
+
 export function SubForm({ open, onOpenChange, onSave, initialValues, title = 'New Subcontractor' }: SubFormProps) {
   const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<SubFormData>({
     resolver: zodResolver(schema),
-    defaultValues: { status: 'active', w9_on_file: false, prequalified: false },
+    defaultValues: { status: 'active' },
   })
 
   useEffect(() => {
     if (open) {
       reset({
         company_name: initialValues?.company_name ?? '',
+        dba_name: initialValues?.dba_name ?? '',
+        business_structure: initialValues?.business_structure ?? null,
         trade: initialValues?.trade ?? '',
         status: initialValues?.status ?? 'active',
-        contact_name: initialValues?.contact_name ?? '',
-        contact_email: initialValues?.contact_email ?? '',
-        contact_phone: initialValues?.contact_phone ?? '',
+        business_phone: initialValues?.business_phone ?? initialValues?.contact_phone ?? '',
+        business_email: initialValues?.business_email ?? initialValues?.contact_email ?? '',
         address: initialValues?.address ?? '',
         city: initialValues?.city ?? '',
-        state: initialValues?.state ?? '',
+        state: initialValues?.state ?? 'MN',
         zip: initialValues?.zip ?? '',
-        license_number: initialValues?.license_number ?? '',
-        license_expiry: initialValues?.license_expiry?.slice(0, 10) ?? '',
-        insurance_carrier: initialValues?.insurance_carrier ?? '',
-        insurance_expiry: initialValues?.insurance_expiry?.slice(0, 10) ?? '',
-        insurance_amount: initialValues?.insurance_amount ?? null,
-        w9_on_file: Boolean(initialValues?.w9_on_file),
-        prequalified: Boolean(initialValues?.prequalified),
-        rating: initialValues?.rating ?? null,
         notes: initialValues?.notes ?? '',
       })
     }
@@ -80,25 +73,34 @@ export function SubForm({ open, onOpenChange, onSave, initialValues, title = 'Ne
 
   const trade = watch('trade')
   const status = watch('status')
-  const w9 = watch('w9_on_file')
-  const prequal = watch('prequalified')
-
-  const onSubmit = async (data: SubFormData) => {
-    await onSave(data)
-  }
+  const structure = watch('business_structure')
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSave)} className="space-y-4">
+          {/* Business identity */}
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <Label>Company Name *</Label>
+              <Label>Legal Business Name *</Label>
               <Input {...register('company_name')} placeholder="Acme Electrical Inc." />
               {errors.company_name && <p className="text-xs text-destructive mt-1">Required</p>}
+            </div>
+            <div>
+              <Label>DBA / Trade Name</Label>
+              <Input {...register('dba_name')} placeholder="Acme Electric" />
+            </div>
+            <div>
+              <Label>Business Structure</Label>
+              <Select value={structure ?? ''} onValueChange={v => setValue('business_structure', v as SubFormData['business_structure'] ?? null)}>
+                <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                <SelectContent>
+                  {BUSINESS_STRUCTURES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Trade *</Label>
@@ -121,26 +123,24 @@ export function SubForm({ open, onOpenChange, onSave, initialValues, title = 'Ne
             </div>
           </div>
 
+          {/* Contact */}
           <div className="border-t pt-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Primary Contact</p>
-            <div className="grid grid-cols-3 gap-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Business Contact</p>
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Name</Label>
-                <Input {...register('contact_name')} placeholder="Jane Smith" />
+                <Label>Business Phone</Label>
+                <Input {...register('business_phone')} placeholder="(612) 555-1234" />
               </div>
               <div>
-                <Label>Email</Label>
-                <Input {...register('contact_email')} type="email" placeholder="jane@acme.com" />
-              </div>
-              <div>
-                <Label>Phone</Label>
-                <Input {...register('contact_phone')} placeholder="(612) 555-1234" />
+                <Label>Business Email</Label>
+                <Input {...register('business_email')} type="email" placeholder="info@acme.com" />
               </div>
             </div>
           </div>
 
+          {/* Address */}
           <div className="border-t pt-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Address</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Business Address</p>
             <div className="grid grid-cols-4 gap-3">
               <div className="col-span-4">
                 <Label>Street</Label>
@@ -161,63 +161,14 @@ export function SubForm({ open, onOpenChange, onSave, initialValues, title = 'Ne
             </div>
           </div>
 
-          <div className="border-t pt-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">License & Insurance</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>License #</Label>
-                <Input {...register('license_number')} placeholder="MN-123456" />
-              </div>
-              <div>
-                <Label>License Expiry</Label>
-                <Input type="date" {...register('license_expiry')} />
-              </div>
-              <div>
-                <Label>Insurance Carrier</Label>
-                <Input {...register('insurance_carrier')} placeholder="Carrier name" />
-              </div>
-              <div>
-                <Label>Insurance Expiry</Label>
-                <Input type="date" {...register('insurance_expiry')} />
-              </div>
-              <div>
-                <Label>Coverage Amount ($)</Label>
-                <Input
-                  type="number"
-                  step="1000"
-                  placeholder="1000000"
-                  onChange={e => setValue('insurance_amount', e.target.value ? parseFloat(e.target.value) : null)}
-                  defaultValue={initialValues?.insurance_amount ?? ''}
-                />
-              </div>
-              <div>
-                <Label>Rating (1–5)</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={5}
-                  placeholder="e.g. 4"
-                  onChange={e => setValue('rating', e.target.value ? parseInt(e.target.value) : null)}
-                  defaultValue={initialValues?.rating ?? ''}
-                />
-              </div>
-            </div>
-            <div className="flex gap-6 mt-3">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input type="checkbox" checked={w9} onChange={e => setValue('w9_on_file', e.target.checked)} className="rounded" />
-                W-9 on file
-              </label>
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input type="checkbox" checked={prequal} onChange={e => setValue('prequalified', e.target.checked)} className="rounded" />
-                Prequalified
-              </label>
-            </div>
-          </div>
-
           <div>
             <Label>Notes</Label>
-            <Textarea {...register('notes')} rows={3} placeholder="Internal notes about this subcontractor…" />
+            <Textarea {...register('notes')} rows={2} placeholder="Internal notes…" />
           </div>
+
+          <p className="text-xs text-muted-foreground">
+            Additional details (owners, licenses, insurance, tax info) can be filled in after creating the record.
+          </p>
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

@@ -221,17 +221,34 @@ export interface Document {
 
 export interface Subcontractor {
   id: number
+  // Business Identity
   company_name: string
+  dba_name?: string | null
+  business_structure?: 'sole_prop' | 'llc' | 'corporation' | 'partnership' | null
+  state_of_registration?: string | null
+  mn_sos_number?: string | null
+  business_start_date?: string | null
   trade: string
   additional_trades?: string | null
-  contact_name?: string | null
-  contact_email?: string | null
-  contact_phone?: string | null
+  // Business address
   address?: string | null
   city?: string | null
   state?: string | null
   zip?: string | null
+  // Mailing address
+  mailing_address?: string | null
+  mailing_city?: string | null
+  mailing_state?: string | null
+  mailing_zip?: string | null
+  // Contact
+  business_phone?: string | null
+  business_email?: string | null
   website?: string | null
+  // Legacy contact fields (preserved for backward compat)
+  contact_name?: string | null
+  contact_email?: string | null
+  contact_phone?: string | null
+  // Legacy license/insurance fields (preserved; new records use sub-tables)
   license_number?: string | null
   license_state?: string | null
   license_expiry?: string | null
@@ -239,15 +256,116 @@ export interface Subcontractor {
   insurance_policy?: string | null
   insurance_expiry?: string | null
   insurance_amount?: number | null
+  // Tax Compliance
+  federal_ein?: string | null
   w9_on_file: number
+  mn_tax_id?: string | null
+  mn_withholding_account?: string | null
+  irs_1099_eligible: number
+  // Operational Independence
+  provides_own_tools: number
+  provides_own_materials: number
+  provides_own_equipment: number
+  responsible_for_labor: number
+  can_hire_employees: number
+  advertises_to_public: number
+  has_multiple_clients: number
+  maintains_separate_location: number
+  can_realize_profit_loss: number
+  // Payment Reporting
+  vendor_id?: string | null
+  payment_method?: 'check' | 'ach' | 'wire' | 'credit_card' | 'other' | null
+  requires_1099: number
+  date_1099_issued?: string | null
+  accounting_system_ref?: string | null
+  // Risk & Status
+  compliance_score?: number | null
+  risk_level?: 'low' | 'medium' | 'high' | null
   prequalified: number
   rating?: number | null
   status: 'active' | 'inactive' | 'do_not_use'
   notes?: string | null
+  // Computed
   verified_count?: number | null
+  // Relations
+  owners?: SubcontractorOwner[]
+  licenses?: SubcontractorLicense[]
+  insurance_policies?: SubcontractorInsurancePolicy[]
+  contracts?: SubcontractorContract[]
   bids?: SubcontractorBid[]
   projects?: SubcontractorProject[]
   documents?: Document[]
+  created_at: string
+  updated_at: string
+}
+
+export interface SubcontractorOwner {
+  id: number
+  subcontractor_id: number
+  owner_name: string
+  title?: string | null
+  address?: string | null
+  city?: string | null
+  state?: string | null
+  zip?: string | null
+  phone?: string | null
+  email?: string | null
+  ownership_pct?: number | null
+  ssn_last4?: string | null
+  is_primary: number
+  created_at: string
+  updated_at: string
+}
+
+export interface SubcontractorLicense {
+  id: number
+  subcontractor_id: number
+  license_type: 'general_contractor' | 'electrical' | 'plumbing' | 'hvac' | 'dli' | 'other'
+  license_number: string
+  issuing_authority?: string | null
+  state?: string | null
+  expiration_date?: string | null
+  specialty_trade?: string | null
+  is_primary: number
+  notes?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface SubcontractorInsurancePolicy {
+  id: number
+  subcontractor_id: number
+  policy_type: 'general_liability' | 'workers_comp' | 'commercial_auto' | 'umbrella' | 'builders_risk' | 'other'
+  carrier: string
+  policy_number?: string | null
+  coverage_amount?: number | null
+  effective_date?: string | null
+  expiration_date?: string | null
+  num_employees_covered?: number | null
+  is_exempt: number
+  exempt_reason?: string | null
+  notes?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface SubcontractorContract {
+  id: number
+  subcontractor_id: number
+  project_id?: number | null
+  contract_title: string
+  scope_of_work?: string | null
+  start_date?: string | null
+  end_date?: string | null
+  payment_terms?: 'lump_sum' | 'unit_price' | 'time_materials' | null
+  contract_value?: number | null
+  responsible_for_completion: number
+  written_contract_on_file: number
+  status: 'draft' | 'active' | 'complete' | 'terminated'
+  notes?: string | null
+  project_number?: string | null
+  project_name?: string | null
+  created_by?: number | null
   created_at: string
   updated_at: string
 }
