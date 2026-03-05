@@ -9,7 +9,7 @@ import { SubForm, type SubFormData } from '@/components/subcontractors/SubForm'
 import { SubBidForm, type SubBidFormData } from '@/components/subcontractors/SubBidForm'
 import { TradeTag } from '@/components/subcontractors/TradeTag'
 import { toast } from '@/hooks/useToast'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import {
   Building2, Users, FileText, Shield, Briefcase, Wrench,
   CheckSquare, AlertOctagon, CreditCard, FolderOpen, ClipboardList,

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AlertTriangle, CheckCircle2, ShieldAlert, ShieldCheck, ShieldX, TrendingUp, XCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { api } from '@/lib/api'
 import { toast } from '@/hooks/useToast'
